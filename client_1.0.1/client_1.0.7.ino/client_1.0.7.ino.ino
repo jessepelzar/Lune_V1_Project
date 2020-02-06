@@ -1,4 +1,7 @@
-#include <WiFiClient.h> 
+//#include <WiFiClient.h> 
+
+#include <ESP8266WiFi.h>
+
 #include <ESP8266WebServer.h>
 #include <ESP8266HTTPClient.h>
 #include <WebSocketClient.h>
@@ -7,6 +10,19 @@
 #include <ArduinoJson.h>
 const char *ssid = "U_Club_24";  //ENTER YOUR WIFI ssid
 const char *password = "metropass";  //ENTER YOUR WIFI password
+
+boolean handshakeFailed=0;
+String data= "";
+char path[] = "/";   //identifier of this device
+char* host = "000.000.000.000";  //replace this ip address with the ip address of your Node.Js server
+const int espport= 3000;
+
+WiFiClient client;
+WebSocketClient webSocketClient;
+unsigned long previousMillis = 0;
+unsigned long currentMillis;
+unsigned long interval=300;
+
 
 void setup() {
   delay(1000);
@@ -38,6 +54,8 @@ void setup() {
   auto httpPostCode = -1;
   String payload = "";
   HTTPClient http;  // Declare object of class HTTPClient
+
+  
   
   while (payload == "") {
         
@@ -76,13 +94,17 @@ void setup() {
   Serial.print("password: ");
   String p = doc["password"];
 
-//  p = "metropass";
+  p = "metropass";
   Serial.println(p);
   Serial.print("ip: ");
   String ip = doc["ip"];
   Serial.println(ip);
   
-
+  
+  
+  int strLen = ip.length() + 1;
+  char charBuf[strLen];
+  host = (char*)ip.c_str();
   
   delay(500);
   
@@ -128,10 +150,66 @@ void setup() {
     delay(100);
   }
   http.end();
+
+  
+  wsconnect();
   
 }
 
 
 void loop() {
-  
+  if (client.connected()) {
+    webSocketClient.sendData("sending data");
+    webSocketClient.getData(data);    
+    if (data.length() > 0) {
+      Serial.println(data);
+      data = "";
+    }
+  }
+  delay(1000);
+}
+
+
+void wsconnect() {
+  // Connect to the websocket server
+  if (client.connect(host, espport)) {
+    Serial.println("Connected");
+  } else {
+    Serial.println("Connection failed.");
+      delay(1000);  
+   
+//   if(handshakeFailed){
+//    handshakeFailed=0;
+//    ESP.restart();
+//    }
+//    handshakeFailed=1;
+    wsconnect();
+  }
+  // Handshake with the server
+  webSocketClient.path = path;
+  webSocketClient.host = host;
+  if (webSocketClient.handshake(client)) {
+    Serial.println("Handshake successful");
+  } else {
+    
+    Serial.println("Handshake failed.");
+    delay(1000);  
+    wsconnect();
+//   if(handshakeFailed){
+//    handshakeFailed=0;
+//    ESP.restart();
+//    }
+//    handshakeFailed=1;
+  }
+
+//  while (1) {
+  if (client.connected()) {
+    currentMillis=millis(); 
+    webSocketClient.getData(data);    
+    if (data.length() > 0) {
+      Serial.println(data);
+      webSocketClient.sendData(data);
+     }
+//      delay(500);
+   }
 }

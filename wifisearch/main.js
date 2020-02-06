@@ -1,7 +1,4 @@
 const express = require('express');
-const find = require('local-devices');
-const netList = require('network-list');
-var ping = require('ping');
 var ip = require("ip");
 const wifi = require("node-wifi");
 const wifiPassword = require('wifi-password');
@@ -9,16 +6,26 @@ var bodyParser = require('body-parser');
 const app = express();
 const PORT = process.env.PORT || 8080;
 const path = require("path");
+var http = require('http');
 
+// local server listening on port
 app.listen(PORT, () => console.log(`listening on ${PORT}`));
-// app.listen('0.0.0.0:3000', () => console.log(`listening on ${PORT}`));
-app.use(bodyParser.urlencoded({limit: '100mb', extended: true}));
-// app.use(bodyParser.urlencoded({
-//     extended: true
-// }));
 
+// app.use(bodyParser.urlencoded({limit: '100mb', extended: true}));
+
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
+
+const server = http.createServer(app);
 // TC8717T13-5G
 // TC8717T099A13
+const WebSocket = require('ws');
+const s = new WebSocket.Server({ server });
+
+server.listen(3000);
+
+
+
 
 wifi.init({
   iface: null // network interface, choose a random wifi interface if set to null
@@ -27,6 +34,7 @@ wifi.init({
 var ssid = "";
 var pass = "";
 var ipAddr = ip.address();
+
 wifi.getCurrentConnections(function(err, currentConnections) {
   if (err) {
     console.log(err);
@@ -34,40 +42,28 @@ wifi.getCurrentConnections(function(err, currentConnections) {
   console.log(`Current Connection:`);
   console.log(currentConnections);
   ssid = currentConnections[0].ssid;
-  // res.send(currentConnections[0].ssid)
-  /*
-    // you may have several connections
-    [
-        {
-            iface: '...', // network interface used for the connection, not available on macOS
-            ssid: '...',
-            bssid: '...',
-            mac: '...', // equals to bssid (for retrocompatibility)
-            channel: <number>,
-            frequency: <number>, // in MHz
-            signal_level: <number>, // in dB
-            quality: <number>, // same as signal level but in %
-            security: '...' //
-            security_flags: '...' // encryption protocols (format currently depending of the OS)
-            mode: '...' // network mode like Infra (format currently depending of the OS)
-        }
-    ]
-    */
 });
 
-wifiPassword().then(password => {
-    console.log(password);
-    pass = password
-    //=> 'johndoesecretpassword'
-});
+// wifiPassword().then(password => {
+//     console.log(password);
+//     pass = password
+//     //=> 'johndoesecretpassword'
+// });
 
 app.get('/', function(req, res) {
+
     res.send({
       "ssid": ssid,
       "password": pass,
       "ip": ipAddr
     });
+    res.sendFile(path.join(__dirname+'/index.html'));
 });
+
+app.get('/home', function(req, res) {
+    res.sendFile(path.join(__dirname+'/index.html'));
+});
+
 
 app.post('/', function(req, res) {
   // console.log("hhh");
@@ -83,12 +79,42 @@ app.post('/', function(req, res) {
   var clientIP = obj.ip;
 
   console.log(clientIP);
-  next(clientIP);
+  connectWebSocket();
 });
 
-function next(newClientIP) {
-  console.log("next");
+var val;
+app.post('/socket', function(req, res) {
+  // var stuff = req.body.SENDTOSOCK;
 
+  // var obj = JSON.parse(response);
+  val = req.body.SENDTOSOCK;
+
+    console.log("new client connected");
+    connectWebSocket();
+
+});
+
+s.on('connection', function(ws) {
+  console.log("new client connected");
+})
+
+function connectWebSocket() {
+  console.log("connectWebSocket");
+
+  // s.on('connection', function(ws) {
+  //   ws.on('message', function(message) {
+  //   //send message out to all clients
+  //     s.clients.forEach(c => {
+  //       c.send(val);
+  //       c.send("sending data!!");
+  //     });
+  //   })
+  //   console.log("new client connected");
+  // })
+  s.clients.forEach(c => {
+    c.send(val);
+    c.send("sending data!!");
+  });
 
 }
 // app.post('/wifisave', function(req, res) {
