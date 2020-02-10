@@ -4,7 +4,7 @@
   "description": "",
   "main": "main.js",
   "scripts": {
-    "start": "node main.js"
+    "start": "nodemon main.js"
   },
   "author": "jesse pelzar",
   "license": "ISC",
@@ -16,7 +16,9 @@
     "local-devices": "^3.0.0",
     "network-list": "^1.1.5",
     "node-wifi": "^2.0.12",
+    "nodemon": "^2.0.2",
     "ping": "^0.2.2",
+    "socket.io": "^2.3.0",
     "wifi-password": "^3.0.1",
     "ws": "^7.2.1",
     "xmlhttprequest": "^1.8.0"

@@ -14,8 +14,10 @@ const char *password = "metropass";  //ENTER YOUR WIFI password
 boolean handshakeFailed=0;
 String data= "";
 char path[] = "/";   //identifier of this device
-char* host = "000.000.000.000";  //replace this ip address with the ip address of your Node.Js server
+char* host = "";  //replace this ip address with the ip address of your Node.Js server
+String hostBackup = "";
 const int espport= 3000;
+String mac = "";
 
 WiFiClient client;
 WebSocketClient webSocketClient;
@@ -75,7 +77,7 @@ void setup() {
         Serial.println(payload);    // Print request response payload
         
         
-        delay(5000);  //Post Data at every 5 seconds
+        delay(1000);  //Post Data at every 5 seconds
   }
 
   // Json part
@@ -94,17 +96,20 @@ void setup() {
   Serial.print("password: ");
   String p = doc["password"];
 
-  p = "metropass";
+  p = "37049188";
   Serial.println(p);
   Serial.print("ip: ");
   String ip = doc["ip"];
   Serial.println(ip);
   
-  
+  hostBackup = ip;
   
   int strLen = ip.length() + 1;
   char charBuf[strLen];
   host = (char*)ip.c_str();
+  
+  Serial.println("host");
+  Serial.println(host);
   
   delay(500);
   
@@ -143,11 +148,9 @@ void setup() {
     payload = http.getString();
     Serial.println(code);
 //    http.POST(ip);
-    delay(1000);
+    delay(500);
     http.addHeader("Content-Type", "application/x-www-form-urlencoded"); 
     httpPostCode = http.POST(postData);
-    
-    delay(100);
   }
   http.end();
 
@@ -159,23 +162,40 @@ void setup() {
 
 void loop() {
   if (client.connected()) {
-    webSocketClient.sendData("sending data");
+    webSocketClient.sendData("");
+    
     webSocketClient.getData(data);    
     if (data.length() > 0) {
       Serial.println(data);
       data = "";
     }
   }
-  delay(1000);
+  else {
+    wsconnect();
+  }
+  
+//  delay(1000);
 }
 
 
 void wsconnect() {
+
+  int strLen = hostBackup.length() + 1;
+  char charBuf[strLen];
+  host = (char*)hostBackup.c_str();
+  mac = WiFi.macAddress();
+
+ 
+  Serial.println("no");
   // Connect to the websocket server
+  Serial.println(host);
+  Serial.println(espport);
   if (client.connect(host, espport)) {
     Serial.println("Connected");
   } else {
     Serial.println("Connection failed.");
+
+//    webSocketClient.loop();
       delay(1000);  
    
 //   if(handshakeFailed){
@@ -183,7 +203,7 @@ void wsconnect() {
 //    ESP.restart();
 //    }
 //    handshakeFailed=1;
-    wsconnect();
+//    wsconnect();
   }
   // Handshake with the server
   webSocketClient.path = path;
@@ -191,10 +211,10 @@ void wsconnect() {
   if (webSocketClient.handshake(client)) {
     Serial.println("Handshake successful");
   } else {
-    
+//    webSocketClient.loop();
     Serial.println("Handshake failed.");
     delay(1000);  
-    wsconnect();
+//    wsconnect();
 //   if(handshakeFailed){
 //    handshakeFailed=0;
 //    ESP.restart();
@@ -205,7 +225,8 @@ void wsconnect() {
 //  while (1) {
   if (client.connected()) {
     currentMillis=millis(); 
-    webSocketClient.getData(data);    
+    webSocketClient.getData(data);  
+    webSocketClient.sendData(mac);   
     if (data.length() > 0) {
       Serial.println(data);
       webSocketClient.sendData(data);

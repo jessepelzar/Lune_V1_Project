@@ -22,10 +22,35 @@ const server = http.createServer(app);
 const WebSocket = require('ws');
 const s = new WebSocket.Server({ server });
 
+var macAddr = "";
+var dataObj = {
+  id: "",
+  data: ""
+};
+
+s.on('request', (request) => onConnection(request));
+s.on('open', function(ws) {
+  console.log("new client connected");
+})
+s.on('connection', function connection(ws) {
+  ws.on('message', function incoming(message) {
+
+    if (message.length > 0) {
+      macAddr = message;
+      console.log('received: %s', message);
+    }
+
+    if (dataObj.data != val || dataObj.id != macAddr) {
+      dataObj.id = macAddr;
+      dataObj.data = val;
+      ws.send(JSON.stringify(dataObj));
+    }
+
+
+    // val = "";
+  });
+});
 server.listen(3000);
-
-
-
 
 wifi.init({
   iface: null // network interface, choose a random wifi interface if set to null
@@ -79,24 +104,23 @@ app.post('/', function(req, res) {
   var clientIP = obj.ip;
 
   console.log(clientIP);
-  connectWebSocket();
+
+  // connectWebSocket();
 });
 
 var val;
 app.post('/socket', function(req, res) {
   // var stuff = req.body.SENDTOSOCK;
-
   // var obj = JSON.parse(response);
   val = req.body.SENDTOSOCK;
-
-    console.log("new client connected");
-    connectWebSocket();
-
+  // console.log("new client connected");
+  // s.on('open', function(ws) {
+  //   console.log("new client connected");
+  // })
+  // connectWebSocket();
 });
 
-s.on('connection', function(ws) {
-  console.log("new client connected");
-})
+
 
 function connectWebSocket() {
   console.log("connectWebSocket");
@@ -108,13 +132,44 @@ function connectWebSocket() {
   //       c.send(val);
   //       c.send("sending data!!");
   //     });
+  //
+  //     // console.log(message);
   //   })
   //   console.log("new client connected");
   // })
-  s.clients.forEach(c => {
-    c.send(val);
-    c.send("sending data!!");
-  });
+  // s.on('connection', function connection(ws) {
+  //   ws.on('message', function incoming(message) {
+  //     console.log('received: %s', message);
+  //     ws.send(val);
+  //     val = "";
+  //   });
+
+    // s.clients.forEach(c => {
+    //   c.send(val);
+    //   c.send("sending data!!");
+    // });
+    // ws.send('something');
+  // });
+  // s.on('close', function close() {
+  //   console.log('disconnected');
+  // });
+  // s.on('open', function open() {
+  //   console.log('connected');
+  //   s.send(val);
+  // });
+  //
+  // s.on('close', function close() {
+  //   console.log('disconnected');
+  // });
+
+
+  // s.on('open', (ws) => {
+  //   s.clients.forEach(c => {
+  //     c.send(val);
+  //     c.send("sending data!!");
+  //   });
+  // });
+
 
 }
 // app.post('/wifisave', function(req, res) {
