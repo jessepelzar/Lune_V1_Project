@@ -15,11 +15,13 @@
 				<!-- HTTP_FORM_PARAM -->
 				<br/>
         <input type="text" name="SENDTOSOCK" value="">
+
 				<!-- <input id='{i}' name='{n}' length='{l}' placeholder='{p}' value='{v}' {c}> -->
 				<!-- /HTTP_FORM_PARAM -->
 				<!-- HTTP_FORM_END -->
 				<br/>
-				<button type='submit'>save</button>
+				0<input id="val" name="SENDTOSOCK" type='range' min="0" max="100" value="0">100
+        <button type="submit" name="button">submit</button>
 			</form>
     <script>
     //   $('.sendDataTest').on('click', function() {
@@ -38,7 +40,20 @@
     //   });
     // </script>
     <script type="text/javascript">
-
+    $('#val').on('input', function() {
+      $.ajax({
+          url : this.form.action,
+          type: this.form.method,
+          data: {SENDTOSOCK: this.value}
+      });
+    });
     </script>
+    <!-- <script>
+      var socket = io.connect('http://localhost');
+      socket.on('news', function (data) {
+        console.log(data);
+        socket.emit('my other event', { my: 'data' });
+      });
+    </script> -->
   </body>
 </html>

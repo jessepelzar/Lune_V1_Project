@@ -1,17 +1,20 @@
 //#include <WiFiClient.h> 
 
-#include <ESP8266WiFi.h>
-
-#include <ESP8266WebServer.h>
-#include <ESP8266HTTPClient.h>
-#include <WebSocketClient.h>
+//#include <ESP8266WiFi.h>
+//
+//#include <ESP8266WebServer.h>
+#include <Preferences.h>
+#include <WiFi.h>
+//#include <Esp32WifiManager.h>
+#include "HTTPClient.h"
+#include "WebSocketClient.h"
 
 //#include <ESP8266mDNS.h>
 #include <ArduinoJson.h>
 const char *ssid = "U_Club_24";  //ENTER YOUR WIFI ssid
 const char *password = "metropass";  //ENTER YOUR WIFI password
 
-boolean handshakeFailed=0;
+boolean handshakeFailed = 0;
 String data= "";
 char path[] = "/";   //identifier of this device
 char* host = "";  //replace this ip address with the ip address of your Node.Js server
@@ -27,7 +30,7 @@ unsigned long interval=300;
 
 
 void setup() {
-  delay(1000);
+  delay(100);
   Serial.begin(115200);
 //  WiFi.mode(WIFI_OFF);        //Prevents reconnection issue (taking too long to connect)
 //  delay(1000);
@@ -50,19 +53,26 @@ void setup() {
 
   WiFi.mode(WIFI_AP);
   WiFi.softAP("NotYourWiFi");
-  Serial.print("IP address: ");
-  Serial.println(WiFi.localIP());
-
+  delay(100);
+  
+//  Serial.println("Set softAPConfig");
+//  IPAddress Ip(192, 168, 4, 1);
+//  IPAddress NMask(255, 255, 255, 0);
+//  WiFi.softAPConfig(Ip, Ip, NMask);
+  
+  IPAddress myIP = WiFi.softAPIP();
+  Serial.print("AP IP address: ");
+  Serial.println(myIP);
+  
   auto httpPostCode = -1;
   String payload = "";
   HTTPClient http;  // Declare object of class HTTPClient
+//  int httpCode = -1;
 
-  
-  
   while (payload == "") {
         
         
-        http.begin("http://192.168.4.2:8080"); // change the ip to your computer ip address
+        http.begin("http://192.168.4.2:8080/"); // change the ip to your computer ip address
         
         //  http.addHeader("Content-Type", "application/x-www-form-urlencoded");    //Specify content-type header
         //  http.POST(postData);
@@ -70,18 +80,14 @@ void setup() {
         int httpCode = http.GET();
         payload = http.getString();    // Get the response payload
       
-      
-        
-      
         Serial.println(httpCode);   // Print HTTP return code
         Serial.println(payload);    // Print request response payload
-        
         
         delay(1000);  //Post Data at every 5 seconds
   }
 
   // Json part
-  //  StaticJsonDocument<3000> jsonBuffer;
+  // StaticJsonDocument<3000> jsonBuffer;
 
   DynamicJsonDocument doc(1024);
   auto root = deserializeJson(doc, payload);
@@ -92,11 +98,13 @@ void setup() {
   //  }
   Serial.print("ssid: ");
   String s = doc["ssid"];
+
+//  s = "6F5E80"
   Serial.println(s);
   Serial.print("password: ");
   String p = doc["password"];
 
-  p = "37049188";
+  p = "metropass";
   Serial.println(p);
   Serial.print("ip: ");
   String ip = doc["ip"];
@@ -116,7 +124,12 @@ void setup() {
 //  httpPostCode = http.POST(postData);   // Send the request
   // connect device to wifi
   WiFi.mode(WIFI_STA);  //This line hides the viewing of ESP as wifi hotspot
-  WiFi.begin(s, p);     //Connect to your WiFi router
+  if ( p == "" ) {
+    WiFi.begin((const char*)s.c_str());     //Connect to your WiFi router
+  }
+  else {
+    WiFi.begin((const char*)s.c_str(), (const char*)p.c_str());     //Connect to your WiFi router
+  }
   Serial.println("");
   Serial.print("Connecting");
   // Wait for connection
@@ -142,7 +155,7 @@ void setup() {
   int code = 0;
   String localip = WiFi.localIP().toString().c_str();
   String postData = "ip=" + localip;
-  while (code != 200) {
+  while (code != 400) {
     http.begin("http://" + ip + ":8080");
     code = http.GET();
     payload = http.getString();
@@ -154,19 +167,21 @@ void setup() {
   }
   http.end();
 
-  
-  wsconnect();
+//  wsconnect();
   
 }
 
 
 void loop() {
   if (client.connected()) {
-    webSocketClient.sendData("");
     
-    webSocketClient.getData(data);    
+    webSocketClient.sendData("");
+    webSocketClient.getData(data);
+    
+        
     if (data.length() > 0) {
       Serial.println(data);
+      
       data = "";
     }
   }

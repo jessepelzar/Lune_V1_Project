@@ -11,16 +11,10 @@ var http = require('http');
 // local server listening on port
 app.listen(PORT, () => console.log(`listening on ${PORT}`));
 
-// app.use(bodyParser.urlencoded({limit: '100mb', extended: true}));
+app.use(bodyParser.urlencoded({limit: '100mb', extended: true}));
 
-app.use(bodyParser.urlencoded({ extended: false }));
+// app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
-
-const server = http.createServer(app);
-// TC8717T13-5G
-// TC8717T099A13
-const WebSocket = require('ws');
-const s = new WebSocket.Server({ server });
 
 var macAddr = "";
 var dataObj = {
@@ -28,10 +22,54 @@ var dataObj = {
   data: ""
 };
 
+let connectedClients = [];
+
+const server = http.createServer(app);
+const WebSocket = require('ws');
+const s = new WebSocket.Server({ server });
+server.listen(3000);
+// s.on('open', function(ws) {
+//   console.log("new client connected");
+// })
+// s.on('connection', (ws, req) => {
+//     console.log('Connected');
+//     // add new connected client
+//     connectedClients.push(ws);
+//     // listen for messages from the streamer, the clients will not send anything so we don't need to filter
+//     ws.on('message', message => {
+//         // send the base64 encoded frame to each connected ws
+//         connectedClients.forEach((ws, i) => {
+//             if (ws.readyState === ws.OPEN) { // check if it is still connected
+//                 // if (message.length > 0) {
+//                 //   macAddr = message;
+//                 //   console.log('received: %s', message);
+//                 // }
+//                 if (dataObj.id != macAddr || dataObj.data != val) {
+//                   dataObj.id = macAddr;
+//                   dataObj.data = val;
+//                   ws.send(JSON.stringify(dataObj));
+//                   console.log(JSON.stringify(dataObj));
+//                 }
+//                 // ws.send(data); // send
+//             } else { // if it's not connected remove from the array of connected ws
+//                 connectedClients.splice(i, 1);
+//             }
+//         });
+//     });
+// });
+
+
+// const server = http.createServer(app);
+// // TC8717T13-5G
+// // TC8717T099A13
+// const WebSocket = require('ws');
+// const s = new WebSocket.Server({ server });
+
 s.on('request', (request) => onConnection(request));
 s.on('open', function(ws) {
   console.log("new client connected");
 })
+
 s.on('connection', function connection(ws) {
   ws.on('message', function incoming(message) {
 
@@ -40,17 +78,21 @@ s.on('connection', function connection(ws) {
       console.log('received: %s', message);
     }
 
-    if (dataObj.data != val || dataObj.id != macAddr) {
+    if (dataObj.id != macAddr || dataObj.data != val) {
       dataObj.id = macAddr;
       dataObj.data = val;
-      ws.send(JSON.stringify(dataObj));
+      setTimeout(function() {
+
+        ws.send(JSON.stringify(dataObj));
+      }, 1000);
+      console.log(JSON.stringify(dataObj));
     }
-
-
-    // val = "";
   });
 });
-server.listen(3000);
+//
+// server.listen(3000);
+
+
 
 wifi.init({
   iface: null // network interface, choose a random wifi interface if set to null
@@ -82,11 +124,14 @@ app.get('/', function(req, res) {
       "password": pass,
       "ip": ipAddr
     });
+
+    // res.send(7);
     res.sendFile(path.join(__dirname+'/index.html'));
 });
 
 app.get('/home', function(req, res) {
     res.sendFile(path.join(__dirname+'/index.html'));
+    // res.redirect('/home')
 });
 
 
