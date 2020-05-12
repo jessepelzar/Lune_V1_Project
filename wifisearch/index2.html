@@ -8,23 +8,21 @@
   <body>
 
     <!-- <button class="sendDataTest" type="button" name="button"></button> -->
-    <form method='post' action='/socket'>
+    <form method='post' action='/home'>
 				<!-- <input id='s' type="text" name='SSID' length=32 placeholder='SSID' value=""><br/> -->
 				<!-- <input id='p' type="text" name='PASS' length=64 type='password' placeholder='password' value=""><br/> -->
 				<!-- /HTTP_FORM_START -->
 				<!-- HTTP_FORM_PARAM -->
 				<br/>
-        <input id="text" type="text" name="SENDTOSOCK" value="">
+        <input type="text" name="SENDTOSOCK" value="">
 
 				<!-- <input id='{i}' name='{n}' length='{l}' placeholder='{p}' value='{v}' {c}> -->
 				<!-- /HTTP_FORM_PARAM -->
 				<!-- HTTP_FORM_END -->
 				<br/>
-
+				0<input id="val" name="SENDTOSOCK" type='range' min="0" max="100" value="0">100
         <button type="submit" name="button">submit</button>
-
 			</form>
-      <!-- 0<input id="val" name="SENDTOSOCK" type='range' min="0" max="100" value="0">100 -->
     <script>
     //   $('.sendDataTest').on('click', function() {
     //       console.log("t1");
@@ -41,34 +39,15 @@
     //     // console.log(lt);
     //   });
     // </script>
-    <!-- <script type="text/javascript">
-    // $('#text').on('input', function() {
-    //   $.ajax({
-    //       url : this.form.action,
-    //       type: this.form.method,
-    //       data: {SENDTOSOCK: this.value}
-    //   });
-    // });
-
-        var getFrame = () => {
-          var data = document.getElementById("val").value;
-          document.getElementById("text").value = data;
-          return data;
-        }
-        // var http = require('http');
-
-
-
-        const WS_URL = 'ws://localhost:80/';
-        const FPS = 3;
-        const ws = new WebSocket(WS_URL);
-        ws.onopen = () => {
-            console.log(`Connected to ${WS_URL}`);
-            setInterval(() => {
-                ws.send(getFrame());
-            }, 100 / FPS);
-        }
-    </script> -->
+    <script type="text/javascript">
+    $('#val').on('input', function() {
+      $.ajax({
+          url : this.form.action,
+          type: this.form.method,
+          data: {SENDTOSOCK: this.value}
+      });
+    });
+    </script>
     <!-- <script>
       var socket = io.connect('http://localhost');
       socket.on('news', function (data) {

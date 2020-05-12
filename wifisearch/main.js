@@ -6,7 +6,7 @@ var bodyParser = require('body-parser');
 const app = express();
 const PORT = process.env.PORT || 8080;
 const path = require("path");
-var http = require('http');
+
 
 // local server listening on port
 app.listen(PORT, () => console.log(`listening on ${PORT}`));
@@ -23,11 +23,45 @@ var dataObj = {
 };
 
 let connectedClients = [];
-
+var http = require('http');
 const server = http.createServer(app);
-const WebSocket = require('ws');
-const s = new WebSocket.Server({ server });
-server.listen(3000);
+
+
+
+const io = require('socket.io')(server);
+io.on('connection', socket => {
+  socket.emit('request', "/* … */"); // emit an event to the socket
+  io.emit('broadcast', "/* … */"); // emit an event to all connected sockets
+  socket.on('reply', () => { console.log(socket); }); // listen to the event
+});
+server.listen(80);
+
+// const WebSocket = require('ws');
+// const s = new WebSocket.Server({ server });
+// server.listen(80);
+// s.on('request', (request) => onConnection(request));
+// s.on('open', function(ws) {
+//   console.log("new client connected");
+// })
+//
+// s.on('connection', function connection(ws) {
+//   ws.on('message', function incoming(message) {
+//
+//     if (message.length > 0) {
+//       macAddr = message;
+//       console.log('received: %s', message);
+//     }
+//
+//     if (dataObj.id != macAddr || dataObj.data != val) {
+//       dataObj.id = macAddr;
+//       dataObj.data = val;
+//       ws.send(JSON.stringify(dataObj));
+//       console.log(JSON.stringify(dataObj));
+//     }
+//   });
+// });
+
+
 // s.on('open', function(ws) {
 //   console.log("new client connected");
 // })
@@ -65,30 +99,7 @@ server.listen(3000);
 // const WebSocket = require('ws');
 // const s = new WebSocket.Server({ server });
 
-s.on('request', (request) => onConnection(request));
-s.on('open', function(ws) {
-  console.log("new client connected");
-})
 
-s.on('connection', function connection(ws) {
-  ws.on('message', function incoming(message) {
-
-    if (message.length > 0) {
-      macAddr = message;
-      console.log('received: %s', message);
-    }
-
-    if (dataObj.id != macAddr || dataObj.data != val) {
-      dataObj.id = macAddr;
-      dataObj.data = val;
-      setTimeout(function() {
-
-        ws.send(JSON.stringify(dataObj));
-      }, 1000);
-      console.log(JSON.stringify(dataObj));
-    }
-  });
-});
 //
 // server.listen(3000);
 
@@ -97,7 +108,7 @@ s.on('connection', function connection(ws) {
 wifi.init({
   iface: null // network interface, choose a random wifi interface if set to null
 });
-
+var val;
 var ssid = "";
 var pass = "";
 var ipAddr = ip.address();
@@ -111,11 +122,11 @@ wifi.getCurrentConnections(function(err, currentConnections) {
   ssid = currentConnections[0].ssid;
 });
 
-// wifiPassword().then(password => {
-//     console.log(password);
-//     pass = password
-//     //=> 'johndoesecretpassword'
-// });
+wifiPassword().then(password => {
+    console.log(password);
+    pass = password
+    //=> 'johndoesecretpassword'
+});
 
 app.get('/', function(req, res) {
 
@@ -131,6 +142,7 @@ app.get('/', function(req, res) {
 
 app.get('/home', function(req, res) {
     res.sendFile(path.join(__dirname+'/index.html'));
+
     // res.redirect('/home')
 });
 
@@ -147,13 +159,13 @@ app.post('/', function(req, res) {
   var response = JSON.stringify(req.body);
   var obj = JSON.parse(response);
   var clientIP = obj.ip;
-
+  val = req.body.SENDTOSOCK;
   console.log(clientIP);
 
   // connectWebSocket();
 });
 
-var val;
+
 app.post('/socket', function(req, res) {
   // var stuff = req.body.SENDTOSOCK;
   // var obj = JSON.parse(response);
