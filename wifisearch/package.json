@@ -20,7 +20,7 @@
     "ping": "^0.2.2",
     "socket.io": "^2.3.0",
     "wifi-password": "^3.0.1",
-    "ws": "^7.2.1",
+    "ws": "^7.4.6",
     "xmlhttprequest": "^1.8.0"
   }
 }
